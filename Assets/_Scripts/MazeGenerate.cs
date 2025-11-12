@@ -4,6 +4,10 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 using TMPro; 
 using UnityEngine.UI;
+using UnityEngine.UIElements;
+using Button = UnityEngine.UI.Button;
+using Slider = UnityEngine.UI.Slider;
+using Toggle = UnityEngine.UI.Toggle;
 
 namespace _Scripts
 {
@@ -11,11 +15,11 @@ namespace _Scripts
     {
         #region Variables
         
-        private Vector2Int mazeSize = new Vector2Int(10, 10);
+        private Vector2Int mazeSize = new Vector2Int(30, 30);
         
         private bool seeProcess;
         
-        private float heuristicWeight = 1.5f;
+        private float heuristicWeight = 0.0f;
         
         List<MazeNode> nodes = new List<MazeNode>();
         
@@ -35,10 +39,11 @@ namespace _Scripts
         [SerializeField] private Slider weightSlider;
         [SerializeField] private Toggle seeProcessToggle;
         [SerializeField] private Button generateButton;
-        
+
         [Header("Action Buttons")]
         [SerializeField] private Button startButton;
         [SerializeField] private Button restartButton;
+        [SerializeField] private Button configurationButton;
 
         #endregion
 
@@ -46,6 +51,8 @@ namespace _Scripts
 
         public void StartGenerationFromUI()
         {
+            ClearMaze();
+            
             int cols = int.TryParse(colsInput.text, out int c) ? c : mazeSize.x;
             int rows = int.TryParse(rowsInput.text, out int r) ? r : mazeSize.y;
             mazeSize = new Vector2Int(cols, rows);
@@ -87,7 +94,8 @@ namespace _Scripts
 
             generateButton.onClick.AddListener(StartGenerationFromUI);
             startButton.onClick.AddListener(OnStartPathfindingClicked); 
-            restartButton.onClick.AddListener(Regenerate);               
+            restartButton.onClick.AddListener(Regenerate);
+            configurationButton.onClick.AddListener(OpenConfigurationPanel);
 
             startButton.gameObject.SetActive(false); 
             restartButton.gameObject.SetActive(false);
@@ -516,16 +524,27 @@ namespace _Scripts
             _isSearching = false;
         }
 
+        private void OpenConfigurationPanel()
+        {
+            PopulateUIWithDefaults();
+            settingsPanel.SetActive(true);
+        }
+
         void Regenerate()
         {
             ClearMaze();
-            
-            PopulateUIWithDefaults(); 
-            
-            settingsPanel.SetActive(true);
-                
-            startButton.gameObject.SetActive(false); 
-            restartButton.gameObject.SetActive(false);
+
+            int cols = int.TryParse(colsInput.text, out int c) ? c : mazeSize.x;
+            int rows = int.TryParse(rowsInput.text, out int r) ? r : mazeSize.y;
+            mazeSize = new Vector2Int(cols, rows);
+
+            heuristicWeight = weightSlider.value;
+            seeProcess = seeProcessToggle.isOn;
+
+            if (seeProcess)
+                StartCoroutine(GenerateMaze(mazeSize));
+            else
+                GenerateMazeInstant(mazeSize);
         }
             
         #endregion
